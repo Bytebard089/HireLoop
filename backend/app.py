@@ -26,9 +26,9 @@ allowed_origins = [
 
 CORS(
     app,
-    resources={r"/*": {"origins": allowed_origins}},
+    resources={r"/*": {"origins": "*"}},
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_headers=["*"],
 )
 
 # ── Blueprints ────────────────────────────────────────────────────────────────
