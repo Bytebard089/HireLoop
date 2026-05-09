@@ -35,26 +35,26 @@ export function FeedbackButtons({ candidateId, currentDecision, onFeedback, comp
   }
 
   return (
-    <div className={`feedback-buttons ${compact ? "compact" : ""}`}>
+    <div className={compact ? "fb-compact" : "fb-full"}>
       <button
-        className={`btn-approve ${decision === "approve" ? "active" : ""}`}
+        className={`${compact ? "fb-btn-c fb-c-approve" : "fb-btn-f fb-f-approve"} ${decision === "approve" ? "active" : ""}`}
         onClick={(e) => handleClick(e, "approve")}
         disabled={loading}
         aria-label="Approve candidate"
         title="Approve"
       >
         <span className="btn-icon">✓</span>
-        <span className="btn-label">Approve</span>
+        {!compact && <span className="btn-label">Approve</span>}
       </button>
       <button
-        className={`btn-reject ${decision === "reject" ? "active" : ""}`}
+        className={`${compact ? "fb-btn-c fb-c-reject" : "fb-btn-f fb-f-reject"} ${decision === "reject" ? "active" : ""}`}
         onClick={(e) => handleClick(e, "reject")}
         disabled={loading}
         aria-label="Reject candidate"
         title="Reject"
       >
         <span className="btn-icon">✕</span>
-        <span className="btn-label">Reject</span>
+        {!compact && <span className="btn-label">Reject</span>}
       </button>
     </div>
   );
