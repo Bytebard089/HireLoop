@@ -3,6 +3,7 @@ import { useStore } from "./store/useStore";
 import JDInput          from "./pages/JDInput";
 import Dashboard        from "./pages/Dashboard";
 import CandidateDetail  from "./pages/CandidateDetail";
+import ComparePage      from "./pages/ComparePage";
 
 function Nav() {
   const { modelVersion, jdId } = useStore();
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="/"                     element={<JDInput />} />
           <Route path="/dashboard"            element={<Dashboard />} />
           <Route path="/candidate/:id"        element={<CandidateDetail />} />
+          <Route path="/compare"              element={<ComparePage />} />
         </Routes>
       </main>
     </BrowserRouter>
