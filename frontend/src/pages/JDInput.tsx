@@ -125,7 +125,7 @@ export default function JDInput() {
           </div>
 
           <h2 className="card-title">Upload Resumes</h2>
-          <p className="card-sub">Upload .txt files — one per candidate.</p>
+          <p className="card-sub">Upload .txt or .pdf files — one per candidate.</p>
 
           <div
             className="dropzone"

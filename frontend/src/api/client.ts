@@ -43,7 +43,7 @@ export async function uploadResumeFiles(
 ): Promise<{ ranked: Candidate[]; questions: Record<string, Question[]>; jd_id: string }> {
   const form = new FormData();
   form.append("jd_id", jdId);
-  files.forEach(f => form.append("resumes", f));
+  files.forEach(f => form.append("files", f));
   return req("/candidates/upload", { method: "POST", body: form });
 }
 
