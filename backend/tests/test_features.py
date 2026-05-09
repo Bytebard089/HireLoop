@@ -159,7 +159,7 @@ def test_semantic_sim_passed_through():
 # ─────────────────────────────────────────────────────────────────────────────
 
 def test_found_and_missing_skills_correct():
-    resume = "React and TypeScript developer. No GraphQL experience."
+    resume = "React and TypeScript developer. No backend experience."
     feats = compute_features(resume, CRITERIA_FRONTEND)
     assert "React" in feats["found_skills"]
     assert "TypeScript" in feats["found_skills"]

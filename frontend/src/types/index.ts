@@ -1,58 +1,50 @@
-// ── Shared TypeScript types ──────────────────────────────────────────────────
-
 export interface Criteria {
-  skills: string[];
+  skills:    string[];
   exp_years: number;
-  level: string;
-  keywords: string[];
+  level:     string;
+  keywords:  string[];
 }
 
 export interface Features {
-  skill_overlap: number;
-  semantic_sim: number;
-  exp_gap: number;
+  skill_overlap:   number;
+  semantic_sim:    number;
+  exp_gap:         number;
   keyword_density: number;
-  found_skills?: string[];
-  missing_skills?: string[];
-  resume_years?: number;
-  resume_snippet?: string;
+  found_skills:    string[];
+  missing_skills:  string[];
+  resume_years:    number;
+  resume_snippet:  string;
 }
 
 export interface Candidate {
   candidate_id: string;
-  name: string;
-  fit_score: number;
-  rank: number;
-  prev_rank: number | null;
-  rank_change: number;
-  features: Features;
-  decision?: "approve" | "reject" | null;
+  name:         string;
+  fit_score:    number;
+  rank:         number;
+  prev_rank:    number;
+  rank_change:  number;
+  features:     Features;
+  decision?:    "approve" | "reject" | null;
+  questions?:   Question[];
 }
 
 export interface Question {
-  tag: string;
+  tag:      string;
   question: string;
 }
 
-export interface ImportanceHistory {
-  version: number;
-  importances: Record<string, number>;
+export interface ModelVersion {
+  version:        number;
+  importances:    Record<string, number>;
   feedback_count: number;
-  val_auc?: number | null;
-  created_at: string;
+  val_auc:        number | null;
+  created_at:     string;
 }
 
 export interface ModelImportances {
-  importances: Record<string, number>;
-  version: number;
+  importances:    Record<string, number>;
+  version:        number;
   feedback_count: number;
-  val_auc?: number | null;
-  history: ImportanceHistory[];
-}
-
-export interface FeedbackResponse {
-  feedback_count: number;
-  retrain_triggered: boolean;
-  importances?: Record<string, number>;
-  new_ranking?: Candidate[];
+  val_auc:        number | null;
+  history:        ModelVersion[];
 }

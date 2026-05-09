@@ -6,9 +6,10 @@ interface Props {
   candidateId: string;
   currentDecision?: "approve" | "reject" | null;
   onFeedback?: (decision: "approve" | "reject", retrained: boolean) => void;
+  compact?: boolean;
 }
 
-export function FeedbackButtons({ candidateId, currentDecision, onFeedback }: Props) {
+export function FeedbackButtons({ candidateId, currentDecision, onFeedback, compact }: Props) {
   const [decision, setDecision] = useState<"approve" | "reject" | null>(currentDecision ?? null);
   const [loading, setLoading]   = useState(false);
   const { jdId, applyRetrain, updateFeedbackCount } = useStore();

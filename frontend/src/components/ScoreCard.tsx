@@ -1,71 +1,88 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Candidate } from "../types";
 import { FeedbackButtons } from "./FeedbackButtons";
-import { Link } from "react-router-dom";
 
-interface Props {
-  candidate: Candidate;
-  flash?: boolean;
-}
+interface Props { candidate: Candidate; globalFlash?: boolean; }
 
-export function ScoreCard({ candidate, flash }: Props) {
-  const [flashClass, setFlashClass] = useState("");
-  const prevRank = useRef(candidate.rank);
+export function ScoreCard({ candidate, globalFlash }: Props) {
+  const navigate     = useNavigate();
+  const [flash, setFlash] = useState<"up" | "down" | null>(null);
+  const prevRank     = useRef(candidate.rank);
+  const prevScore    = useRef(candidate.fit_score);
 
   useEffect(() => {
-    const rankChanged = candidate.rank !== prevRank.current;
-    prevRank.current = candidate.rank;
+    const rankChanged  = candidate.rank !== prevRank.current;
+    const scoreChanged = Math.abs(candidate.fit_score - prevScore.current) > 0.001;
 
-    if (!rankChanged || !flash) {
-      // No rank change for this card, or no retrain event — don't flash
-      setFlashClass("");
-      return;
+    // Only flash if this specific card's rank/score actually changed
+    if (globalFlash && (rankChanged || scoreChanged)) {
+      const delta = candidate.rank_change ?? 0;
+      if (delta !== 0) {
+        setFlash(delta > 0 ? "up" : "down");
+        setTimeout(() => setFlash(null), 1200);
+      }
     }
+    prevRank.current  = candidate.rank;
+    prevScore.current = candidate.fit_score;
+  }, [candidate.rank, candidate.fit_score, candidate.rank_change, globalFlash]);
 
-    const delta = candidate.rank_change ?? 0;
-    if (delta > 0) {
-      setFlashClass("flash-up");
-    } else if (delta < 0) {
-      setFlashClass("flash-down");
-    } else {
-      setFlashClass("");
-      return;
-    }
+  const pct    = Math.round((candidate.fit_score ?? 0) * 100);
+  const tier   = pct >= 70 ? "high" : pct >= 45 ? "mid" : "low";
+  const delta  = candidate.rank_change ?? 0;
+  const margin = 2 + (candidate.candidate_id.charCodeAt(0) % 4);
 
-    const t = setTimeout(() => setFlashClass(""), 800);
-    return () => clearTimeout(t);
-  }, [candidate.rank, candidate.rank_change, flash]);
-
-  const scorePercent = Math.round((candidate.fit_score ?? 0) * 100);
-  const margin = 2 + (String(candidate.candidate_id).charCodeAt(0) % 5);
-  const delta = candidate.rank_change ?? 0;
+  const rankCls =
+    candidate.rank === 1 ? "rank-1" :
+    candidate.rank === 2 ? "rank-2" :
+    candidate.rank === 3 ? "rank-3" : "rank-n";
 
   return (
-    <div className={`score-card ${flashClass}`}>
-      <div className="rank-badge">#{candidate.rank}</div>
+    <div
+      className={[
+        "score-card",
+        flash === "up"   ? "flash-up"   : "",
+        flash === "down" ? "flash-down" : "",
+      ].filter(Boolean).join(" ")}
+      onClick={() => navigate(`/candidate/${candidate.candidate_id}`)}
+    >
+      <div className={`rank-badge ${rankCls}`}>{candidate.rank}</div>
 
-      <div className="card-body">
-        <Link to={`/candidate/${candidate.candidate_id}`} className="candidate-name">
-          {candidate.name}
-        </Link>
-
-        <div className="score-bar-wrap">
-          <div className="score-bar-bg">
-            <div className="score-bar" style={{ width: `${scorePercent}%` }} />
-            <div className="score-band" style={{
-              left: `${Math.max(0, scorePercent - margin)}%`,
-              width: `${Math.min(100, scorePercent + margin) - Math.max(0, scorePercent - margin)}%`,
+      <div className="sc-body">
+        <span className="sc-name">{candidate.name}</span>
+        <div className="sc-meta">
+          {candidate.features?.resume_years ?? "?"} yrs ·{" "}
+          {candidate.features?.found_skills?.slice(0, 3).join(", ") || "—"}
+        </div>
+        <div className="sc-bar-row">
+          <div className="sc-track">
+            <div className={`sc-fill ${tier}`} style={{ width: `${pct}%` }} />
+            <div className="sc-band" style={{
+              left:  `${Math.max(0, pct - margin)}%`,
+              width: `${Math.min(100, pct + margin) - Math.max(0, pct - margin)}%`,
             }} />
           </div>
-          <span className="score-label">{scorePercent}% <span className="score-margin">±{margin}</span></span>
+          <span className={`sc-score ${tier}`}>
+            {pct}%<span style={{ fontSize: 10, opacity: .6 }}> ±{margin}</span>
+          </span>
         </div>
       </div>
 
-      <div className="card-right">
-        <div className={`rank-delta ${delta > 0 ? "up" : delta < 0 ? "down" : "same"}`}>
+      <div className="sc-right">
+        <span className={`rank-delta ${delta > 0 ? "up" : delta < 0 ? "down" : "same"}`}>
           {delta > 0 ? `▲${delta}` : delta < 0 ? `▼${Math.abs(delta)}` : "—"}
-        </div>
-        <FeedbackButtons candidateId={candidate.candidate_id} currentDecision={candidate.decision} />
+        </span>
+        {candidate.decision ? (
+          <span className={`badge ${candidate.decision === "approve" ? "badge-green" : "badge-red"}`}>
+            {candidate.decision === "approve" ? "✓ Approved" : "✕ Rejected"}
+          </span>
+        ) : (
+          <FeedbackButtons
+            candidateId={candidate.candidate_id}
+            currentDecision={candidate.decision}
+            compact
+          />
+        )}
       </div>
     </div>
   );

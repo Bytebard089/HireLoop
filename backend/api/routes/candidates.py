@@ -270,3 +270,53 @@ def get_questions(candidate_id: str):
     })
 
     return jsonify({"questions": state["questions"].get(candidate_id, [])})
+
+
+# ── GET /api/candidates/export?jd_id=<id> ────────────────────────────────
+@candidates_bp.route("/export", methods=["GET"])
+def export_shortlist():
+    """Export ranked candidates as CSV for a given JD."""
+    import csv, io
+    from flask import Response
+
+    jd_id = request.args.get("jd_id")
+    if not jd_id:
+        return jsonify({"error": "jd_id required"}), 400
+
+    with get_session() as session:
+        from sqlalchemy import select as sel, asc
+        rows = session.execute(
+            sel(Candidate)
+            .where(Candidate.jd_id == jd_id)
+            .order_by(asc(Candidate.rank))
+        ).scalars().all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "Rank", "Name", "Fit Score", "Decision",
+        "Skill Overlap", "Semantic Match", "Exp Gap", "Keyword Density",
+        "Experience Years", "Found Skills", "Missing Skills",
+    ])
+    for r in rows:
+        feats = r.features or {}
+        writer.writerow([
+            r.rank,
+            r.name,
+            f"{round((r.fit_score or 0) * 100)}%",
+            r.decision or "pending",
+            f"{round((feats.get('skill_overlap', 0)) * 100)}%",
+            f"{round((feats.get('semantic_sim',  0)) * 100)}%",
+            f"{round((feats.get('exp_gap',        0)) * 100)}%",
+            f"{round((feats.get('keyword_density',0)) * 100)}%",
+            feats.get("resume_years", "?"),
+            ", ".join(feats.get("found_skills",   []) or []),
+            ", ".join(feats.get("missing_skills", []) or []),
+        ])
+
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=hireloop-shortlist.csv"},
+    )
