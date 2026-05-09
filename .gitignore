@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.dist-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# Env files
+.env
+.env.*
+
+# Local data/artifacts
+*.db
+*.sqlite3
+chroma_store/
+model.pkl
+*.pkl
+*.zip
+
+# Logs
+*.log
+
+# Node/Vite
+node_modules/
+dist/
+
+# OS
+.DS_Store
