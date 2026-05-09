@@ -25,7 +25,6 @@ export interface Candidate {
   rank_change:  number;
   features:     Features;
   decision?:    "approve" | "reject" | null;
-  questions?:   Question[];
 }
 
 export interface Question {
