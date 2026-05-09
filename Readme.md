@@ -2,7 +2,7 @@
 
 > An AI agent that reads a job description, scores candidates using ML, generates adaptive interview questions, and **re-learns your preferences from every approve/reject decision in real time.**
 
-**[Live Demo →](https://hireloop.vercel.app)** · **[Demo Video →](#)**
+**[Live Demo →](https://hire-loop-lac.vercel.app)** · **[Demo Video →](#)**
 
 ---
 
