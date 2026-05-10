@@ -44,10 +44,10 @@ Rules:
 
 def question_gen_node(state: HireLoopState) -> HireLoopState:
     """Generates 3 adaptive interview questions per candidate based on their specific gaps."""
-    criteria   = state["criteria"]
+    criteria   = state.get("criteria", {})
     questions  = {}
 
-    for candidate in state["ranked"]:
+    for candidate in state.get("ranked", []):
         cid          = candidate["candidate_id"]
         features     = candidate["features"]
 
@@ -81,16 +81,32 @@ Skills NOT found in resume (gaps to probe): {missing}"""
 
         try:
             response = _get_llm().invoke(messages)
+            text = response.content.strip()
+            
+            # Strip markdown code blocks if the LLM added them
+            if text.startswith("```json"):
+                text = text[7:]
+            elif text.startswith("```"):
+                text = text[3:]
+            if text.endswith("```"):
+                text = text[:-3]
+            text = text.strip()
+
             try:
-                qs = json.loads(response.content)
+                qs = json.loads(text)
             except json.JSONDecodeError:
-                # Handle stray markdown or surrounding text from the model.
-                match = re.search(r"\[.*\]", response.content, re.DOTALL)
-                qs = json.loads(match.group()) if match else None
+                # Handle stray surrounding text
+                match = re.search(r"\[.*\]", text, re.DOTALL)
+                if match:
+                    qs = json.loads(match.group())
+                else:
+                    raise ValueError("No JSON array found in LLM response")
+                    
             if not isinstance(qs, list):
                 raise ValueError("LLM did not return a JSON array")
             questions[cid] = qs
-        except Exception:
+        except Exception as e:
+            print(f"Question gen failed: {e}")
             questions[cid] = [
                 {"tag": "general", "question": "Walk me through your most complex frontend project."},
                 {"tag": "general", "question": "How do you approach performance optimisation?"},

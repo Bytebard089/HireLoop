@@ -1,5 +1,4 @@
 import re
-import chromadb
 import os
 
 CHROMA_PATH = os.getenv("CHROMA_PERSIST_PATH", "./chroma_store")
@@ -14,15 +13,22 @@ def _rag_enabled() -> bool:
 def get_client():
     global _client
     if _client is None:
-        _client = chromadb.PersistentClient(path=CHROMA_PATH)
+        try:
+            import chromadb
+            _client = chromadb.PersistentClient(path=CHROMA_PATH)
+        except ImportError:
+            return None
     return _client
 
 
 def get_embedder():
     global _embedder
     if _embedder is None:
-        from sentence_transformers import SentenceTransformer
-        _embedder = SentenceTransformer("all-MiniLM-L6-v2")
+        try:
+            from sentence_transformers import SentenceTransformer
+            _embedder = SentenceTransformer("all-MiniLM-L6-v2")
+        except ImportError:
+            return None
     return _embedder
 
 
@@ -64,8 +70,12 @@ def embed_resume(candidate_id: str, resume_text: str, jd_id: str):
     if not _rag_enabled():
         return
 
-    col      = get_client().get_or_create_collection(f"jd_{jd_id}")
+    client = get_client()
     embedder = get_embedder()
+    if not client or not embedder:
+        return
+
+    col      = client.get_or_create_collection(f"jd_{jd_id}")
     chunks   = chunk_resume(resume_text)
     vectors  = embedder.encode(chunks).tolist()
 
@@ -81,5 +91,8 @@ def embed_resume(candidate_id: str, resume_text: str, jd_id: str):
 
 
 def delete_resume(candidate_id: str, jd_id: str):
-    col = get_client().get_or_create_collection(f"jd_{jd_id}")
+    client = get_client()
+    if not client:
+        return
+    col = client.get_or_create_collection(f"jd_{jd_id}")
     col.delete(ids=[f"{candidate_id}_chunk_{i}" for i in range(3)])

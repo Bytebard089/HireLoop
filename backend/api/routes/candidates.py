@@ -269,7 +269,7 @@ def get_questions(candidate_id: str):
         "new_ranked": [],
     })
 
-    return jsonify({"questions": state["questions"].get(candidate_id, [])})
+    return jsonify({"questions": state.get("questions", {}).get(candidate_id, [])})
 
 
 # ── GET /api/candidates/export?jd_id=<id> ────────────────────────────────

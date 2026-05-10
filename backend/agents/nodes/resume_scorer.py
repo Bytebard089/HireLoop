@@ -20,7 +20,14 @@ def _load_model(jd_id: str):
     if os.path.exists(LEGACY_MODEL):
         with open(LEGACY_MODEL, "rb") as f:
             return pickle.load(f)
-    return None
+            
+    # Proactively train the fallback model if it's completely missing
+    try:
+        from ml.trainer import train_initial_model
+        return train_initial_model()
+    except Exception as e:
+        print(f"Fallback training failed: {e}")
+        return None
 
 
 def resume_scorer_node(state: HireLoopState) -> HireLoopState:

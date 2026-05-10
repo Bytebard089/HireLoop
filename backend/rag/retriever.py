@@ -11,8 +11,11 @@ def _rag_enabled() -> bool:
 def get_reranker():
     global _reranker
     if _reranker is None:
-        from sentence_transformers import CrossEncoder
-        _reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+        try:
+            from sentence_transformers import CrossEncoder
+            _reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+        except ImportError:
+            return None
     return _reranker
 
 
@@ -23,13 +26,19 @@ def retrieve_for_jd(jd_text: str, jd_id: str, top_k: int = 20) -> dict[str, floa
     """
     if not _rag_enabled():
         return {}
+    
+    client = get_client()
+    if not client:
+        return {}
 
     try:
-        col = get_client().get_collection(f"jd_{jd_id}")
+        col = client.get_collection(f"jd_{jd_id}")
     except Exception:
         return {}   # collection doesn't exist yet
 
     embedder  = get_embedder()
+    if not embedder:
+        return {}
     query_emb = embedder.encode(jd_text).tolist()
 
     # Bi-encoder retrieval — get top_k chunks
@@ -52,6 +61,9 @@ def retrieve_for_jd(jd_text: str, jd_id: str, top_k: int = 20) -> dict[str, floa
 
     # Cross-encoder reranking
     reranker = get_reranker()
+    if not reranker:
+        return {}  # Graceful fallback could just return bi-encoder scores, but returning empty defaults to heuristics
+        
     pairs    = [(jd_text, doc) for doc in docs]
     scores   = reranker.predict(pairs)
 
