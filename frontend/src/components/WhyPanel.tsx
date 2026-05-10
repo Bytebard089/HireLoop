@@ -14,33 +14,33 @@ interface Props {
 
 export function WhyPanel({ features, name }: Props) {
   return (
-    <div className="why-panel">
-      <h3 className="panel-title">Why this score? — {name}</h3>
-      <div className="feature-bars">
+    <div>
+      <div style={{ fontSize: "14px", fontWeight: 700, marginBottom: "1.25rem" }}>Why this score? — {name}</div>
+      <div className="why-bars">
         {FEATURE_META.map(({ key, label, description, invert }) => {
           const raw = (features[key] as number) ?? 0;
           const display = invert ? 1 - raw : raw;
           const pct = Math.round(display * 100);
           const tier = pct >= 70 ? "high" : pct >= 40 ? "mid" : "low";
           return (
-            <div key={key} className="feature-row">
-              <div className="feature-label">
-                <span>{label}</span>
-                <span className="feature-desc">{description}</span>
+            <div key={key} className="why-row">
+              <div className="why-top">
+                <div className="why-name">{label}</div>
+                <div className={`why-pct ${tier}`}>{pct}%</div>
               </div>
-              <div className="feature-bar-track">
-                <div className={`feature-bar-fill tier-${tier}`} style={{ width: `${pct}%` }} />
+              <div className="why-desc">{description}</div>
+              <div className="why-track">
+                <div className={`why-fill ${tier}`} style={{ width: `${pct}%` }} />
               </div>
-              <span className={`feature-pct tier-${tier}`}>{pct}%</span>
             </div>
           );
         })}
       </div>
 
       {features.missing_skills && features.missing_skills.length > 0 && (
-        <div className="skill-gap-section">
-          <h4>Skill Gaps</h4>
-          <div className="skill-chips">
+        <div className="skill-section">
+          <div className="skill-section-label">Skill Gaps</div>
+          <div className="chip-wrap">
             {features.missing_skills.map((s) => (
               <span key={s} className="chip chip-missing">{s}</span>
             ))}
@@ -49,9 +49,9 @@ export function WhyPanel({ features, name }: Props) {
       )}
 
       {features.found_skills && features.found_skills.length > 0 && (
-        <div className="skill-gap-section">
-          <h4>Matching Skills</h4>
-          <div className="skill-chips">
+        <div className="skill-section">
+          <div className="skill-section-label">Matching Skills</div>
+          <div className="chip-wrap">
             {features.found_skills.map((s) => (
               <span key={s} className="chip chip-found">{s}</span>
             ))}
