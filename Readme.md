@@ -2,11 +2,11 @@
 
 > An intelligent, autonomous agentic pipeline designed to streamline candidate evaluation. HireLoop combines semantic retrieval with an adaptive Machine Learning classifier that actively learns and recalibrates to your hiring preferences in real-time.
 
-**[Live Demo →](https://hire-loop-lac.vercel.app)** · **[Demo Video →](./demo.webp)**
+**[Live Demo →](https://hire-loop-lac.vercel.app)**
 
 ---
 
-## 🚀 Engineering & ML Differentiation
+## Engineering & ML Differentiation
 
 Traditional Applicant Tracking Systems rely heavily on rigid keyword matching. HireLoop introduces a paradigm shift by implementing a robust, actively learning MLOps architecture:
 
@@ -16,7 +16,7 @@ Traditional Applicant Tracking Systems rely heavily on rigid keyword matching. H
 
 ---
 
-## 🏗 System Architecture
+## System Architecture
 
 The application is built on a scalable, decoupled architecture with a strong emphasis on typed interfaces and stateful agentic workflows.
 
@@ -65,7 +65,7 @@ graph TD
 
 ---
 
-## 🧠 MLOps & Machine Learning Pipeline
+## MLOps & Machine Learning Pipeline
 
 ### Model Training & Validation Rigor
 The foundational model relies on a synthetically engineered dataset of 200 labeled pairs (incorporating strategic noise to simulate complex, non-linear edge cases). `trainer.py` enforces standard ML validation techniques, yielding strong initial performance metrics before deployment:
@@ -88,7 +88,7 @@ To capture implicit candidate qualifications, HireLoop implements an advanced Re
 
 ---
 
-## 🛠 Technology Stack
+## Technology Stack
 
 | Domain | Technology | Engineering Rationale |
 |---|---|---|
@@ -100,7 +100,7 @@ To capture implicit candidate qualifications, HireLoop implements an advanced Re
 
 ---
 
-## 💻 Local Development Setup
+## Local Development Setup
 
 ### Prerequisites
 - Python 3.11+
@@ -136,7 +136,7 @@ npm run dev             # Initializes Vite dev server on http://localhost:5173
 
 ---
 
-## 📡 API Reference
+## API Reference
 
 | Method | Endpoint | Purpose |
 |---|---|---|
@@ -149,7 +149,7 @@ npm run dev             # Initializes Vite dev server on http://localhost:5173
 
 ---
 
-## 🛣 Engineering Roadmap & Future Scope
+## Engineering Roadmap & Future Scope
 
 - **Document Processing Pipeline**: Migrate to robust OCR/LayoutLM integrations to handle non-standard, deeply nested PDF structures.
 - **Multi-Tenant Architectures**: Expand the PostgreSQL schema and routing logic to support isolated, per-user model personalization states.
