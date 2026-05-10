@@ -4,12 +4,13 @@ import { useStore, getPersistedJdId } from "../store/useStore";
 import { WhyPanel } from "../components/WhyPanel";
 import { AdaptiveQs } from "../components/AdaptiveQs";
 import { FeedbackButtons } from "../components/FeedbackButtons";
+import { ShapPanel } from "../components/ShapPanel";
 import { listCandidates } from "../api/client";
 
 export default function CandidateDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"why" | "questions">("why");
+  const [tab, setTab] = useState<"why" | "questions" | "shap">("why");
   const [recovering, setRecovering] = useState(false);
 
   const { candidates, questions, jdId, setCandidates, setJD } = useStore();
@@ -88,6 +89,12 @@ export default function CandidateDetail() {
           Why this score?
         </button>
         <button
+          className={`tab-btn ${tab === "shap" ? "active" : ""}`}
+          onClick={() => setTab("shap")}
+        >
+          SHAP Analysis
+        </button>
+        <button
           className={`tab-btn ${tab === "questions" ? "active" : ""}`}
           onClick={() => setTab("questions")}
         >
@@ -96,9 +103,15 @@ export default function CandidateDetail() {
       </div>
 
       <div className="detail-body">
-        {tab === "why" ? (
+        {tab === "why" && (
           <WhyPanel features={candidate.features} name={candidate.name} />
-        ) : (
+        )}
+        {tab === "shap" && (
+          <div className="card" style={{ padding: "1.5rem" }}>
+            <ShapPanel features={candidate.features} score={candidate.fit_score ?? 0.5} />
+          </div>
+        )}
+        {tab === "questions" && (
           <AdaptiveQs
             candidateId={candidate.candidate_id}
             jdId={jdId}

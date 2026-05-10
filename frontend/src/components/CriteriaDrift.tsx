@@ -66,10 +66,10 @@ export function CriteriaDrift({ importances, feedbackNeeded = 5 }: Props) {
 
       <ResponsiveContainer width="100%" height={240}>
         <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, bottom: 5, left: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border2)" />
+          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border-strong)" />
           <XAxis
             type="number"
-            tick={{ fill: "var(--text2)", fontSize: 11 }}
+            tick={{ fill: "var(--text-secondary)", fontSize: 11 }}
             axisLine={false}
             tickLine={false}
             tickFormatter={(v) => `${v}%`}
@@ -78,14 +78,14 @@ export function CriteriaDrift({ importances, feedbackNeeded = 5 }: Props) {
           <YAxis
             type="category"
             dataKey="name"
-            tick={{ fill: "var(--text)", fontSize: 12, fontWeight: 500 }}
+            tick={{ fill: "var(--text-primary)", fontSize: 12, fontWeight: 500 }}
             axisLine={false}
             tickLine={false}
             width={100}
           />
           <Tooltip
             contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)" }}
-            labelStyle={{ color: "var(--text)", fontWeight: 600, marginBottom: "4px" }}
+            labelStyle={{ color: "var(--text-primary)", fontWeight: 600, marginBottom: "4px" }}
             formatter={(v: number, name: string, props: any) => {
               const d = props.payload.delta;
               const deltaStr = d > 0 ? ` (+${d}%)` : d < 0 ? ` (${d}%)` : "";
@@ -118,11 +118,11 @@ export function CriteriaDrift({ importances, feedbackNeeded = 5 }: Props) {
         <div className="auc-sparkline" style={{ marginTop: "1.5rem", paddingTop: "1rem", borderTop: "1px solid var(--border)" }}>
           <p className="history-label" style={{ display: "flex", justifyContent: "space-between" }}>
             <span>Model AUC Trend</span>
-            <span style={{ color: "var(--accent)", fontWeight: 600 }}>{(aucData[aucData.length - 1].auc).toFixed(2)}</span>
+            <span style={{ color: "var(--indigo-600)", fontWeight: 600 }}>{(aucData[aucData.length - 1].auc).toFixed(2)}</span>
           </p>
           <ResponsiveContainer width="100%" height={80}>
             <LineChart data={aucData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-              <Line type="monotone" dataKey="auc" stroke="var(--accent)" strokeWidth={2} dot={{ r: 3, fill: "var(--surface)", strokeWidth: 2 }} activeDot={{ r: 5 }} />
+              <Line type="monotone" dataKey="auc" stroke="var(--indigo-600)" strokeWidth={2} dot={{ r: 3, fill: "var(--surface)", strokeWidth: 2 }} activeDot={{ r: 5 }} />
               <Tooltip 
                 contentStyle={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, fontSize: "11px", padding: "4px 8px" }}
                 formatter={(v: number) => [v.toFixed(3), "AUC"]}
