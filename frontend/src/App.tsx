@@ -26,9 +26,12 @@ function Nav() {
   );
 }
 
+import { Toaster } from "react-hot-toast";
+
 export default function App() {
   return (
     <BrowserRouter>
+      <Toaster position="bottom-right" toastOptions={{ duration: 4000 }} />
       <Nav />
       <main className="app-main">
         <Routes>

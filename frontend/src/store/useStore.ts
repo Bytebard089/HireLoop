@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import toast from "react-hot-toast";
 import type { Candidate, Criteria, ModelImportances } from "../types";
 
 // ── Session persistence (fixes page-refresh bug) ──────────────────────────
@@ -81,6 +82,22 @@ export const useStore = create<HireLoopStore>((set, get) => ({
     }));
 
     const newVersion = (imp?.version ?? 0) + 1;
+    
+    // Trigger toast notification
+    toast(`✨ Model Retrained: v${newVersion}`, {
+      icon: '🧠',
+      style: {
+        borderRadius: '10px',
+        background: 'rgba(255, 255, 255, 0.85)',
+        color: 'var(--text-primary)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        border: '1px solid var(--border)',
+        fontSize: '13px',
+        fontWeight: 600,
+        boxShadow: 'var(--shadow-md)'
+      },
+    });
 
     set(s => ({
       candidates:   merged,
