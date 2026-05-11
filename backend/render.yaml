@@ -4,7 +4,7 @@ services:
     plan: free
     env: python
     buildCommand: pip install -r requirements.txt && python ml/dataset.py && python ml/trainer.py && python db/seed.py
-    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 180
     envVars:
       - key: OPENAI_API_KEY
         sync: false
@@ -14,3 +14,5 @@ services:
         sync: false
       - key: FLASK_ENV
         value: production
+      - key: RAG_ENABLED
+        value: "0"

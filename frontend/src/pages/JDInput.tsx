@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { parseJD, uploadResumeFiles } from "../api/client";
+import { parseJD, uploadResumeFiles, warmUpBackend } from "../api/client";
 import { useStore } from "../store/useStore";
 
 const DEMO_JD = `Senior Frontend Engineer — Remote
@@ -13,6 +13,14 @@ and Core Web Vitals is strongly preferred.
 Required: React, TypeScript, GraphQL
 Nice to have: accessibility, performance, testing`;
 
+const LOADING_MESSAGES = {
+  connecting: "Connecting to server...",
+  waking: "Backend is waking up (~30s)...",
+  processing: "Parsing job description...",
+  scoring: "Scoring resumes with AI...",
+  scoring_waking: "Backend is waking up (~30s)...",
+};
+
 export default function JDInput() {
   const [jdText,   setJdText]   = useState("");
   const [step,     setStep]     = useState<"jd" | "resumes">("jd");
@@ -20,16 +28,34 @@ export default function JDInput() {
   const [criteria, setCriteria] = useState<any>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [loading,  setLoading]  = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState("");
   const [error,    setError]    = useState<string | null>(null);
+  const [backendReady, setBackendReady] = useState<boolean | null>(null);
   const fileRef  = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const store    = useStore();
 
+  // Proactively warm up the backend on component mount
+  useEffect(() => {
+    warmUpBackend().then(wasWarm => {
+      setBackendReady(true);
+      if (!wasWarm) {
+        console.log("[HireLoop] Backend cold-started successfully");
+      }
+    }).catch(() => {
+      setBackendReady(false);
+    });
+  }, []);
+
   async function handleParseJD() {
     if (!jdText.trim()) return;
     setLoading(true); setError(null);
+    setLoadingMsg(LOADING_MESSAGES.connecting);
     try {
-      const res = await parseJD(jdText);
+      const res = await parseJD(jdText, (stage) => {
+        if (stage === "waking") setLoadingMsg(LOADING_MESSAGES.waking);
+        else if (stage === "processing") setLoadingMsg(LOADING_MESSAGES.processing);
+      });
       setJdId(res.jd_id);
       setCriteria(res.criteria);
       store.setJD(res.jd_id, jdText, res.criteria);
@@ -38,6 +64,7 @@ export default function JDInput() {
       setError(e.message);
     } finally {
       setLoading(false);
+      setLoadingMsg("");
     }
   }
 
@@ -49,14 +76,19 @@ export default function JDInput() {
   async function handleScore() {
     if (!files.length) return;
     setLoading(true); setError(null);
+    setLoadingMsg("Scoring resumes with AI...");
     try {
-      const res = await uploadResumeFiles(jdId, files);
+      const res = await uploadResumeFiles(jdId, files, (stage) => {
+        if (stage === "waking") setLoadingMsg(LOADING_MESSAGES.scoring_waking);
+        else if (stage === "processing") setLoadingMsg("AI is analyzing resumes...");
+      });
       store.setCandidates(res.ranked, res.questions);
       navigate("/dashboard");
     } catch (e: any) {
       setError(e.message);
     } finally {
       setLoading(false);
+      setLoadingMsg("");
     }
   }
 
@@ -96,9 +128,26 @@ export default function JDInput() {
               onClick={handleParseJD}
               disabled={!jdText.trim() || loading}
             >
-              {loading ? "Parsing…" : "Parse JD →"}
+              {loading ? (
+                <span className="loading-state">
+                  <span className="spinner" />
+                  {loadingMsg || "Parsing…"}
+                </span>
+              ) : "Parse JD →"}
             </button>
           </div>
+
+          {/* Cold-start warning banner */}
+          {loading && loadingMsg.includes("waking") && (
+            <div className="cold-start-banner">
+              <span className="cold-start-icon">☕</span>
+              <div>
+                <strong>Backend is waking up</strong>
+                <p>Free-tier servers spin down after inactivity. This typically takes 30–60 seconds on the first request.</p>
+              </div>
+            </div>
+          )}
+
           {error && <p className="error-msg">{error}</p>}
         </div>
       ) : (
@@ -167,9 +216,26 @@ export default function JDInput() {
               onClick={handleScore}
               disabled={!files.length || loading}
             >
-              {loading ? "Scoring…" : `Score ${files.length} Resume${files.length !== 1 ? "s" : ""} →`}
+              {loading ? (
+                <span className="loading-state">
+                  <span className="spinner" />
+                  {loadingMsg || "Scoring…"}
+                </span>
+              ) : `Score ${files.length} Resume${files.length !== 1 ? "s" : ""} →`}
             </button>
           </div>
+
+          {/* Cold-start warning banner */}
+          {loading && loadingMsg.includes("waking") && (
+            <div className="cold-start-banner">
+              <span className="cold-start-icon">☕</span>
+              <div>
+                <strong>Backend is waking up</strong>
+                <p>Free-tier servers spin down after inactivity. This typically takes 30–60 seconds on the first request.</p>
+              </div>
+            </div>
+          )}
+
           {error && <p className="error-msg">{error}</p>}
         </div>
       )}

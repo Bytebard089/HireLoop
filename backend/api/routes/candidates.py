@@ -237,7 +237,7 @@ def list_candidates():
     return jsonify({"candidates": candidates})
 
 
-# ── GET /api/candidates/<id>/questions ───────────────────────────────────────
+# ── GET /api/candidates/<candidate_id>/questions ───────────────────────────────────────
 
 @candidates_bp.route("/<candidate_id>/questions", methods=["GET"])
 def get_questions(candidate_id: str):
@@ -246,18 +246,20 @@ def get_questions(candidate_id: str):
     if not jd_id:
         return jsonify({"error": "jd_id query param required"}), 400
 
+    # Capture all needed data INSIDE the session to avoid DetachedInstanceError
     with get_session() as session:
         cand = session.get(Candidate, candidate_id)
         jd   = session.get(JobDescription, jd_id)
         if not cand or not jd:
             return jsonify({"error": "candidate or JD not found"}), 404
 
-        features = cand.features or {}
-        criteria = jd.criteria   or {}
+        features    = cand.features or {}
+        criteria    = jd.criteria   or {}
+        jd_raw_text = jd.raw_text or ""
 
     from agents.nodes.question_gen import question_gen_node
     state = question_gen_node({
-        "jd_text":  jd.raw_text if jd else "",
+        "jd_text":  jd_raw_text,
         "jd_id":    jd_id,
         "criteria": criteria,
         "resumes":  [],
@@ -269,7 +271,12 @@ def get_questions(candidate_id: str):
         "new_ranked": [],
     })
 
-    return jsonify({"questions": state.get("questions", {}).get(candidate_id, [])})
+    result = state.get("questions", {}).get(candidate_id, {})
+    # Support both new format (dict with skill_gaps + questions) and legacy (list)
+    if isinstance(result, dict):
+        return jsonify(result)
+    else:
+        return jsonify({"questions": result})
 
 
 # ── GET /api/candidates/export?jd_id=<id> ────────────────────────────────
@@ -291,28 +298,34 @@ def export_shortlist():
             .order_by(asc(Candidate.rank))
         ).scalars().all()
 
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow([
-        "Rank", "Name", "Fit Score", "Decision",
-        "Skill Overlap", "Semantic Match", "Exp Gap", "Keyword Density",
-        "Experience Years", "Found Skills", "Missing Skills",
-    ])
-    for r in rows:
-        feats = r.features or {}
+        # Look up decisions from Feedback table (not Candidate model)
+        feedbacks = session.execute(
+            select(Feedback).where(Feedback.jd_id == jd_id)
+        ).scalars().all()
+        decision_map = {fb.candidate_id: fb.decision for fb in feedbacks}
+
+        output = io.StringIO()
+        writer = csv.writer(output)
         writer.writerow([
-            r.rank,
-            r.name,
-            f"{round((r.fit_score or 0) * 100)}%",
-            r.decision or "pending",
-            f"{round((feats.get('skill_overlap', 0)) * 100)}%",
-            f"{round((feats.get('semantic_sim',  0)) * 100)}%",
-            f"{round((feats.get('exp_gap',        0)) * 100)}%",
-            f"{round((feats.get('keyword_density',0)) * 100)}%",
-            feats.get("resume_years", "?"),
-            ", ".join(feats.get("found_skills",   []) or []),
-            ", ".join(feats.get("missing_skills", []) or []),
+            "Rank", "Name", "Fit Score", "Decision",
+            "Skill Overlap", "Semantic Match", "Exp Gap", "Keyword Density",
+            "Experience Years", "Found Skills", "Missing Skills",
         ])
+        for r in rows:
+            feats = r.features or {}
+            writer.writerow([
+                r.rank,
+                r.name,
+                f"{round((r.fit_score or 0) * 100)}%",
+                decision_map.get(str(r.id), "pending"),
+                f"{round((feats.get('skill_overlap', 0)) * 100)}%",
+                f"{round((feats.get('semantic_sim',  0)) * 100)}%",
+                f"{round((feats.get('exp_gap',        0)) * 100)}%",
+                f"{round((feats.get('keyword_density',0)) * 100)}%",
+                feats.get("resume_years", "?"),
+                ", ".join(feats.get("found_skills",   []) or []),
+                ", ".join(feats.get("missing_skills", []) or []),
+            ])
 
     output.seek(0)
     return Response(

@@ -19,13 +19,13 @@ interface HireLoopStore {
   jdText:        string;
   criteria:      Criteria | null;
   candidates:    Candidate[];
-  questions:     Record<string, import("../types").Question[]>;
+  questions:     Record<string, any>;  // supports both legacy Question[] and new {skill_gaps, questions}
   importances:   ModelImportances | null;
   modelVersion:  number;
   retrainFlash:  boolean;
 
   setJD:              (id: string, text: string, criteria: Criteria) => void;
-  setCandidates:      (candidates: Candidate[], questions: Record<string, import("../types").Question[]>) => void;
+  setCandidates:      (candidates: Candidate[], questions: Record<string, any>) => void;
   updateDecision:     (candidateId: string, decision: "approve" | "reject") => void;
 
   // ── FIXED: merges decisions back in so badges survive retrain ──────────

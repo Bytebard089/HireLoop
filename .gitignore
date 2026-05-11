@@ -16,7 +16,9 @@ venv/
 
 # Env files
 .env
-.env.*
+.env.local
+.env.production
+!.env.example
 
 # Local data/artifacts
 *.db

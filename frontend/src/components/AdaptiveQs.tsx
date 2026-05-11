@@ -1,15 +1,27 @@
 import { useEffect, useState } from "react";
 import { getQuestions } from "../api/client";
 import type { Question } from "../types";
+import type { SkillGap } from "../api/client";
 
 function tagClass(tag: string): string {
-  if (tag.startsWith("gap"))    return "gap";
-  if (tag.startsWith("depth"))  return "depth";
-  if (tag.includes("design"))   return "design";
+  if (tag.startsWith("gap"))     return "gap";
+  if (tag.startsWith("depth"))   return "depth";
+  if (tag.startsWith("project")) return "project";
+  if (tag.includes("design"))    return "design";
   return "general";
 }
 function tagLabel(tag: string): string {
-  return tag.replace("gap:", "Gap: ").replace("depth:", "Depth: ").replace("system_design", "System Design");
+  return tag
+    .replace("gap:", "Gap: ")
+    .replace("depth:", "Depth: ")
+    .replace("project:", "Project: ")
+    .replace("system_design", "System Design");
+}
+
+function severityClass(severity: string): string {
+  if (severity === "high") return "severity-high";
+  if (severity === "medium") return "severity-medium";
+  return "severity-low";
 }
 
 function Skeleton() {
@@ -30,10 +42,12 @@ interface Props {
   candidateId:     string;
   jdId:            string;
   cachedQuestions?: Question[];
+  cachedSkillGaps?: SkillGap[];
 }
 
-export function AdaptiveQs({ candidateId, jdId, cachedQuestions }: Props) {
+export function AdaptiveQs({ candidateId, jdId, cachedQuestions, cachedSkillGaps }: Props) {
   const [questions, setQuestions] = useState<Question[]>(cachedQuestions ?? []);
+  const [skillGaps, setSkillGaps] = useState<SkillGap[]>(cachedSkillGaps ?? []);
   const [loading,   setLoading]   = useState(!cachedQuestions?.length);
   const [error,     setError]     = useState<string | null>(null);
 
@@ -41,13 +55,17 @@ export function AdaptiveQs({ candidateId, jdId, cachedQuestions }: Props) {
     // Always fetch if no cached questions — fixes the empty-cache bug
     if (cachedQuestions && cachedQuestions.length > 0) {
       setQuestions(cachedQuestions);
+      setSkillGaps(cachedSkillGaps ?? []);
       setLoading(false);
       return;
     }
     setLoading(true);
     setError(null);
     getQuestions(candidateId, jdId)
-      .then(res => setQuestions(res.questions ?? []))
+      .then(res => {
+        setQuestions(res.questions ?? []);
+        setSkillGaps(res.skill_gaps ?? []);
+      })
       .catch(e  => setError(e.message ?? "Failed to load"))
       .finally(() => setLoading(false));
   }, [candidateId, jdId]);
@@ -70,8 +88,33 @@ export function AdaptiveQs({ candidateId, jdId, cachedQuestions }: Props) {
 
   return (
     <div>
-      <div className="section-label" style={{ marginBottom: 10 }}>
-        Adaptive interview questions — generated from this candidate's specific gaps
+      {/* Skill Gaps Section */}
+      {skillGaps.length > 0 && (
+        <div className="skill-gaps-section">
+          <div className="section-label" style={{ marginBottom: 8 }}>
+            Resume-specific skill gaps
+          </div>
+          <div className="skill-gaps-list">
+            {skillGaps.map((gap, i) => (
+              <div key={i} className={`skill-gap-item ${severityClass(gap.severity)}`}>
+                <div className="skill-gap-header">
+                  <span className="skill-gap-name">{gap.skill}</span>
+                  <span className={`skill-gap-severity ${severityClass(gap.severity)}`}>
+                    {gap.severity}
+                  </span>
+                </div>
+                {gap.context && (
+                  <p className="skill-gap-context">{gap.context}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Questions Section */}
+      <div className="section-label" style={{ marginBottom: 10, marginTop: skillGaps.length > 0 ? 20 : 0 }}>
+        Personalized interview questions — based on this candidate's resume
       </div>
       <div className="q-list">
         {questions.map((q, i) => (

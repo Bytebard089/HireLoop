@@ -30,9 +30,10 @@ export function ShapPanel({ features, score }: Props) {
 
   return (
     <div>
-      <div className="section-label" style={{ marginBottom: 4 }}>SHAP feature attribution</div>
+      <div className="section-label" style={{ marginBottom: 4 }}>Feature attribution (approximate)</div>
       <p style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 12, lineHeight: 1.55 }}>
         How each feature pushed the score above or below the baseline of {(BASE_SCORE * 100).toFixed(0)}%.
+        Contributions are approximated from feature weights — not computed via Shapley values.
       </p>
       <ResponsiveContainer width="100%" height={140}>
         <BarChart data={data} layout="vertical" margin={{ top: 0, right: 40, bottom: 0, left: 20 }}>

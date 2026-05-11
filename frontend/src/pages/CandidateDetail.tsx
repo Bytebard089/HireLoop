@@ -41,6 +41,7 @@ export default function CandidateDetail() {
   if (recovering) {
     return (
       <div className="page-empty">
+        <div className="spinner" style={{ width: 24, height: 24 }} />
         <p>Loading candidate…</p>
       </div>
     );
@@ -54,8 +55,21 @@ export default function CandidateDetail() {
     );
   }
 
-  // Pass undefined instead of empty array so AdaptiveQs always fetches when no cache
-  const cachedQuestions = questions[candidate.candidate_id];
+  // Extract questions and skill gaps from the new format
+  const cachedData = questions[candidate.candidate_id];
+  let cachedQuestions: any[] | undefined;
+  let cachedSkillGaps: any[] | undefined;
+
+  if (cachedData) {
+    if (Array.isArray(cachedData)) {
+      // Legacy format: just an array of questions
+      cachedQuestions = cachedData;
+    } else if (typeof cachedData === "object") {
+      // New format: { skill_gaps: [...], questions: [...] }
+      cachedQuestions = (cachedData as any).questions;
+      cachedSkillGaps = (cachedData as any).skill_gaps;
+    }
+  }
   const hasCachedQuestions = cachedQuestions && cachedQuestions.length > 0;
 
   return (
@@ -74,6 +88,12 @@ export default function CandidateDetail() {
             <span className="hero-rank">Rank #{candidate.rank}</span>
             <span className="hero-sep">·</span>
             <span className="hero-score">{Math.round((candidate.fit_score ?? 0) * 100)}% Match</span>
+            {candidate.features?.resume_years > 0 && (
+              <>
+                <span className="hero-sep">·</span>
+                <span className="hero-exp">{candidate.features.resume_years} yrs exp</span>
+              </>
+            )}
           </div>
         </div>
         <div className="hero-actions">
@@ -92,13 +112,13 @@ export default function CandidateDetail() {
           className={`tab-btn ${tab === "shap" ? "active" : ""}`}
           onClick={() => setTab("shap")}
         >
-          SHAP Analysis
+          Feature Attribution
         </button>
         <button
           className={`tab-btn ${tab === "questions" ? "active" : ""}`}
           onClick={() => setTab("questions")}
         >
-          Interview Questions
+          Skill Gaps & Questions
         </button>
       </div>
 
@@ -116,6 +136,7 @@ export default function CandidateDetail() {
             candidateId={candidate.candidate_id}
             jdId={jdId}
             cachedQuestions={hasCachedQuestions ? cachedQuestions : undefined}
+            cachedSkillGaps={cachedSkillGaps}
           />
         )}
       </div>

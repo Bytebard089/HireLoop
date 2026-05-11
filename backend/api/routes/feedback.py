@@ -23,8 +23,19 @@ def submit_feedback():
         return jsonify({"error": "decision must be 'approve' or 'reject'"}), 400
 
     with get_session() as session:
-        fb = Feedback(jd_id=jd_id, candidate_id=candidate_id, decision=decision)
-        session.add(fb)
+        # Upsert: if feedback already exists for this candidate+JD, update it
+        existing = session.execute(
+            select(Feedback)
+            .where(Feedback.jd_id == jd_id)
+            .where(Feedback.candidate_id == candidate_id)
+        ).scalars().first()
+
+        if existing:
+            existing.decision = decision
+        else:
+            fb = Feedback(jd_id=jd_id, candidate_id=candidate_id, decision=decision)
+            session.add(fb)
+
         session.commit()
         count = session.execute(
             select(func.count()).select_from(Feedback).where(Feedback.jd_id == jd_id)

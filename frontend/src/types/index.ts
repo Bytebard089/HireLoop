@@ -32,6 +32,12 @@ export interface Question {
   question: string;
 }
 
+export interface SkillGap {
+  skill:    string;
+  severity: string;
+  context:  string;
+}
+
 export interface ModelVersion {
   version:        number;
   importances:    Record<string, number>;
