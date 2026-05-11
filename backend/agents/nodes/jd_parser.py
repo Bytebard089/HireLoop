@@ -31,12 +31,22 @@ def _get_llm() -> ChatOpenAI:
 
 SYSTEM = """You are a technical recruiter. Extract structured hiring criteria from job descriptions.
 Return ONLY valid JSON — no markdown, no explanation.
+
+CRITICAL RULES:
+- Each skill MUST be a single, discrete technology or tool — NOT compound.
+  WRONG: "NumPy/Pandas"  →  RIGHT: "NumPy", "Pandas"
+  WRONG: "React or Vue"  →  RIGHT: "React", "Vue"
+- Do NOT include vague conceptual phrases as skills.
+  WRONG: "basic ML concepts", "good communication", "problem solving"
+  These are not matchable technologies — omit them entirely.
+- Only include concrete, searchable technical terms.
+
 Schema:
 {
-  "skills": ["React", "TypeScript"],       // required technical skills
-  "exp_years": 3,                          // minimum years experience (int)
-  "level": "senior",                       // junior | mid | senior | staff
-  "keywords": ["GraphQL", "accessibility"] // important keywords beyond skills
+  "skills": ["Python", "NumPy", "Pandas"],    // required technical skills (one per entry)
+  "exp_years": 3,                              // minimum years experience (int, 0 if not specified)
+  "level": "senior",                           // junior | mid | senior | staff | intern
+  "keywords": ["NLP", "deep learning"]         // important keywords beyond required skills
 }"""
 
 

@@ -15,6 +15,56 @@ def _norm_term(term: str) -> str:
     return _norm_text(term)
 
 
+# Conceptual phrases that should NOT be treated as matchable skills.
+# These are things like "basic ML concepts" which are requirements,
+# not discrete technologies.
+_CONCEPTUAL_PHRASES = {
+    "basic ml concepts", "ml concepts", "basic concepts",
+    "good communication", "communication skills", "soft skills",
+    "team player", "problem solving", "analytical thinking",
+    "strong fundamentals", "cs fundamentals", "basic programming",
+    "data structures", "algorithms", "dsa",
+}
+
+
+def _is_conceptual(term: str) -> bool:
+    """Check if a term is a conceptual phrase rather than a concrete skill."""
+    lower = term.lower().strip()
+    if lower in _CONCEPTUAL_PHRASES:
+        return True
+    # Phrases starting with "basic" + non-tech word are usually conceptual
+    if lower.startswith("basic ") and not any(
+        tech in lower for tech in ["sql", "python", "java", "html", "css", "react"]
+    ):
+        return True
+    return False
+
+
+def _split_compound_skill(skill: str) -> list[str]:
+    """
+    Split compound skills like "NumPy/Pandas" into ["NumPy", "Pandas"].
+    Also handles "React or Vue", "Python and SQL", "C/C++", etc.
+    """
+    original = skill.strip()
+    if not original:
+        return []
+
+    # Don't split "C/C++" or "CI/CD" — these are single technologies
+    compound_exceptions = {"c/c++", "ci/cd", "node.js", "next.js", "vue.js", "react.js"}
+    if original.lower() in compound_exceptions:
+        return [original]
+
+    # Split on "/" , " or " , " and " , " & "
+    parts = re.split(r'\s*/\s*|\s+or\s+|\s+and\s+|\s*&\s*', original)
+    parts = [p.strip() for p in parts if p.strip()]
+
+    # If splitting produced the same thing, return as-is
+    if len(parts) <= 1:
+        return [original]
+
+    return parts
+
+
 def _has_term(resume_norm: str, term: str) -> bool:
     t = _norm_term(term)
     if not t:
@@ -71,8 +121,22 @@ def compute_features(
         skill_overlap, semantic_sim, exp_gap, keyword_density,
         found_skills, missing_skills, resume_snippet
     """
-    jd_skills_raw: list[str] = [str(s).strip() for s in criteria.get("skills", []) if str(s).strip()]
-    jd_keywords_raw: list[str] = [str(k).strip() for k in criteria.get("keywords", []) if str(k).strip()]
+    # ── Expand compound skills and filter conceptual phrases ──────────────
+    raw_skills: list[str] = [str(s).strip() for s in criteria.get("skills", []) if str(s).strip()]
+    jd_skills_raw: list[str] = []
+    for skill in raw_skills:
+        if _is_conceptual(skill):
+            continue  # Skip "basic ML concepts" etc.
+        expanded = _split_compound_skill(skill)
+        jd_skills_raw.extend(expanded)
+
+    # Also expand keywords the same way
+    raw_keywords: list[str] = [str(k).strip() for k in criteria.get("keywords", []) if str(k).strip()]
+    jd_keywords_raw: list[str] = []
+    for kw in raw_keywords:
+        expanded = _split_compound_skill(kw)
+        jd_keywords_raw.extend(expanded)
+
     jd_exp:      float     = float(criteria.get("exp_years", 0))
 
     resume_norm = _norm_text(resume_text)
