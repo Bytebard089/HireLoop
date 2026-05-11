@@ -77,6 +77,24 @@ def resume_scorer_node(state: HireLoopState) -> HireLoopState:
                 features["keyword_density"],
             ]])
             fit_score = float(model.predict_proba(X)[0][1])
+
+            # When RAG is disabled, semantic_sim is always 0.0 for every candidate.
+            # The XGBoost model was trained on synthetic data where semantic_sim
+            # varied, so it learns to give high scores when other features are
+            # decent — regardless of semantic_sim being 0. This leads to
+            # inflated scores (e.g. 98% when skill_overlap is only 67%).
+            #
+            # Fix: blend the model prediction with a transparent heuristic
+            # when semantic_sim is 0, so scores better reflect the actual
+            # feature values the user can see on the "Why this score?" panel.
+            if features["semantic_sim"] < 0.01:
+                heuristic = (
+                    features["skill_overlap"]   * 0.40 +
+                    (1 - features["exp_gap"])    * 0.35 +
+                    features["keyword_density"]  * 0.25
+                )
+                # Blend: 40% model + 60% heuristic when RAG is off
+                fit_score = fit_score * 0.4 + heuristic * 0.6
         else:
             # Fallback: weighted average before first model is trained
             fit_score = (

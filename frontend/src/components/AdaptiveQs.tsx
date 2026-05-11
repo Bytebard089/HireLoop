@@ -24,6 +24,17 @@ function severityClass(severity: string): string {
   return "severity-low";
 }
 
+/**
+ * Detect if cached questions are stale (old generic format).
+ * Old questions have tags like "general" and generic text; new ones have
+ * "gap:", "depth:", "project:", or "system_design" tags.
+ */
+function isStaleCache(qs: Question[] | undefined): boolean {
+  if (!qs || qs.length === 0) return true;
+  // If every question has tag "general", it's the old generic fallback
+  return qs.every(q => tagClass(q.tag) === "general");
+}
+
 function Skeleton() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -48,17 +59,19 @@ interface Props {
 export function AdaptiveQs({ candidateId, jdId, cachedQuestions, cachedSkillGaps }: Props) {
   const [questions, setQuestions] = useState<Question[]>(cachedQuestions ?? []);
   const [skillGaps, setSkillGaps] = useState<SkillGap[]>(cachedSkillGaps ?? []);
-  const [loading,   setLoading]   = useState(!cachedQuestions?.length);
+  const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState<string | null>(null);
 
   useEffect(() => {
-    // Always fetch if no cached questions — fixes the empty-cache bug
-    if (cachedQuestions && cachedQuestions.length > 0) {
+    // If cached questions are good (not stale generic ones), use them
+    if (cachedQuestions && cachedQuestions.length > 0 && !isStaleCache(cachedQuestions)) {
       setQuestions(cachedQuestions);
       setSkillGaps(cachedSkillGaps ?? []);
       setLoading(false);
       return;
     }
+
+    // Otherwise, always fetch fresh personalized questions from the API
     setLoading(true);
     setError(null);
     getQuestions(candidateId, jdId)

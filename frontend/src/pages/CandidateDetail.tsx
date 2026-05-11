@@ -97,7 +97,7 @@ export default function CandidateDetail() {
           </div>
         </div>
         <div className="hero-actions">
-          <FeedbackButtons candidateId={candidate.candidate_id} currentDecision={candidate.decision} />
+          <FeedbackButtons candidateId={candidate.candidate_id} currentDecision={candidate.decision} compact />
         </div>
       </div>
 
